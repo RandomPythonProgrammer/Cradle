@@ -150,23 +150,32 @@ int install(const std::vector<std::string>& args) {
         }
 
         bool duplicate = false;
+        bool otherVersions = false;
 
-        for (const YAML::Node node : config["Dependencies"]) {
+        for (int i = 0; i < config["Dependencies"].size(); i++) {
+            YAML::Node node = config["Dependencies"][i];
             matches = std::smatch();
             std::string lib = node.as<std::string>();
             if (std::regex_match(lib, matches, pattern)) {
                 if (matches[1] == target) {
-                    if (matches[2] == targetVer) {
+                    if (matches[2] == targetVer && !duplicate) {
                         duplicate = true;
-                        logger.warn(std::format("Dependency {}=={} is already installed", target, targetVer));
+                        logger.warn(std::format("Dependency {} is already installed", lib));
+                    } else {
+                        otherVersions = true;
+                        logger.info(std::format("Uninstalling other/duplicated version {}", lib));
+                        config["Dependencies"].remove(i);
+                        i--;
                     }
                 }
             }
         }
 
-        if (!duplicate) {
-            config["Dependencies"].push_back(std::format("{}=={}", target, targetVer));
-            logger.info(std::format("Dependency {}=={} installed", target, targetVer));
+        if (!duplicate || otherVersions) {
+            if (!duplicate) {
+                config["Dependencies"].push_back(std::format("{}=={}", target, targetVer));
+                logger.info(std::format("Dependency {}=={} installed", target, targetVer));
+            }
 
             std::ofstream ostream("cradle.yaml");
             if (ostream.good()) {
@@ -193,8 +202,10 @@ int uninstall(const std::vector<std::string>& args) {
         std::smatch matches;
 
         std::string target = args[2];
+        std::string targetVer = "latest";
         if (std::regex_match(target, matches, pattern)) {
             target = matches[1];
+            targetVer = matches[2];
         }
 
         bool exists = false;
@@ -205,18 +216,18 @@ int uninstall(const std::vector<std::string>& args) {
             YAML::Node node = deps[i];
             std::string lib = node.as<std::string>();
             if (std::regex_match(lib, matches, pattern)) {
-                if (matches[1] != target) {
-                    const std::regex namePattern(R"~(^.+\/(.+?).git.+)~");
+                if (matches[1] != target || matches[2] != targetVer) {
+                    const std::regex namePattern(R"~(^.+\/(.+?).git==(.+)$)~");
                     std::smatch nameMatches;
-                    if (!(std::regex_match(lib, nameMatches, namePattern) && nameMatches[1] == target)) {
+                    if (!(std::regex_match(lib, nameMatches, namePattern) && nameMatches[1] == target && nameMatches[2] == targetVer)) {
                         continue;
                     }
                 }
 
                 config["Dependencies"].remove(i);
                 exists = true;
-                logger.info(std::format("Dependency {} uninstalled", target));
-                break;
+                logger.info(std::format("Dependency {} uninstalled", lib));
+                i--;
             }
         }
 
