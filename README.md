@@ -1,6 +1,6 @@
 # Cradle
 
-This project CLI aims to simplify the process of creating and managing projects with CMake, especially when it comes to libraries.
+This project CLI aims to simplify the process of creating and managing projects with CMake, especially when it comes to libraries. The program will automatically validate repo links and tag versions.
 
 # Usage
 
