@@ -17,10 +17,6 @@
 
 Logger logger(LogLevel::INFO, "Main", &std::cout);
 
-bool hasToken(const std::vector<std::string>& tokens, const std::string token) {
-    return std::find(tokens.begin(), tokens.end(), token) != tokens.end();
-}
-
 bool initCheck() {
     if (!std::filesystem::exists("cradle.yaml")) {
         logger.fatal("cradle.yaml not found, please run \"cradle init\"");
