@@ -57,7 +57,7 @@ int build(const std::vector<std::string>& args) {
 
             std::vector<std::string> mustLink;
 
-            const std::regex pattern("(.+?)==(.+?)");
+            const std::regex pattern("^(.+?)==(.+?)$");
             for (const YAML::Node dep : deps) {
                 std::smatch matches;
                 std::string target = dep.as<std::string>();
@@ -97,7 +97,7 @@ int build(const std::vector<std::string>& args) {
 
             cmake << "\n";
 
-            for (std::string& link: mustLink) {
+            for (std::string& link : mustLink) {
                 cmake << std::format("target_link_libraries({} PRIVATE ${{{}_LIBRARIES}})\n", config["Executable Name"].as<std::string>(), link);
                 cmake << std::format("target_include_directories(myExecutable PRIVATE \"${{{}_SOURCE_DIR}}/include\")\n", link);
             }
@@ -143,7 +143,7 @@ int install(const std::vector<std::string>& args) {
     if (initCheck()) {
         YAML::Node config = YAML::LoadFile("cradle.yaml");
 
-        const std::regex pattern("(.+?)==(.+?)");
+        const std::regex pattern("^(.+?)==(.+?)$");
         std::smatch matches;
 
         std::string target = args[2];
@@ -171,18 +171,18 @@ int install(const std::vector<std::string>& args) {
         if (!duplicate) {
             config["Dependencies"].push_back(std::format("{}=={}", target, targetVer));
             logger.info(std::format("Dependency {}=={} installed", target, targetVer));
-        }
 
-        std::ofstream ostream("cradle.yaml");
-        if (ostream.good()) {
-            ostream << config;
-            ostream.close();
-        } else {
-            logger.fatal("Failed to update cradle.yaml");
-            return -1;
-        }
+            std::ofstream ostream("cradle.yaml");
+            if (ostream.good()) {
+                ostream << config;
+                ostream.close();
+            } else {
+                logger.fatal("Failed to update cradle.yaml");
+                return -1;
+            }
 
-        build(args);
+            build(args);
+        }
     } else {
         return -1;
     }
@@ -193,7 +193,7 @@ int uninstall(const std::vector<std::string>& args) {
     if (initCheck()) {
         YAML::Node config = YAML::LoadFile("cradle.yaml");
 
-        const std::regex pattern("(.+?)==(.+?)");
+        const std::regex pattern("^(.+?)==(.+?)$");
         std::smatch matches;
 
         std::string target = args[2];
@@ -209,29 +209,35 @@ int uninstall(const std::vector<std::string>& args) {
             YAML::Node node = deps[i];
             std::string lib = node.as<std::string>();
             if (std::regex_match(lib, matches, pattern)) {
-                if (matches[1] == target) {
-                    config["Dependencies"].remove(i);
-                    exists = true;
-                    logger.info(std::format("Dependency {} uninstalled", target));
-                    break;
+                if (matches[1] != target) {
+                    const std::regex namePattern(R"~(^.+\/(.+?).git.+)~");
+                    std::smatch nameMatches;
+                    if (!(std::regex_match(lib, nameMatches, namePattern) && nameMatches[1] == target)) {
+                        continue;
+                    }
                 }
+
+                config["Dependencies"].remove(i);
+                exists = true;
+                logger.info(std::format("Dependency {} uninstalled", target));
+                break;
             }
         }
 
         if (!exists) {
             logger.warn(std::format("Dependency {} not installed", target));
-        }
-
-        std::ofstream ostream("cradle.yaml");
-        if (ostream.good()) {
-            ostream << config;
-            ostream.close();
         } else {
-            logger.fatal("Failed to update cradle.yaml");
-            return -1;
-        }
+            std::ofstream ostream("cradle.yaml");
+            if (ostream.good()) {
+                ostream << config;
+                ostream.close();
+            } else {
+                logger.fatal("Failed to update cradle.yaml");
+                return -1;
+            }
 
-        build(args);
+            build(args);
+        }
     } else {
         return -1;
     }
