@@ -1,3 +1,5 @@
+#include <cpr/cpr.h>
+#include <cpr/cprtypes.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
@@ -16,6 +18,32 @@
 #include "Logger.h"
 
 Logger logger(LogLevel::INFO, "Main", &std::cout);
+
+bool validateRepo(const std::string& repo, const std::string& tag) {
+    const std::regex pattern(R"~(^.+\/(.+?)\/(.+?).git)~");
+    std::smatch matches;
+    if ((std::regex_match(repo, matches, pattern))) {
+        std::string owner = matches[1];
+        std::string name = matches[2];
+
+        // check if tag exists
+        if (tag != "latest") {
+            cpr::Response tagResponse = cpr::Get(cpr::Url(std::format("https://api.github.com/repos/{}/{}/releases/tags/{}", owner, name, tag)));
+            if (tagResponse.status_code == 404) {
+                logger.error(std::format("Invalid tag {} for {}", tag, name));
+                return false;
+            }
+        }
+
+        cpr::Response cmakeResponse = cpr::Get(cpr::Url(std::format("https://api.github.com/repos/{}/{}/contents/CMakeLists.txt", owner, name)));
+        if (cmakeResponse.status_code == 404) {
+            logger.error(std::format("No CMakeLists.txt found for {}", repo));
+            return false;
+        }
+        return true;
+    }
+    return false;
+}
 
 bool initCheck() {
     if (!std::filesystem::exists("cradle.yaml")) {
@@ -49,12 +77,11 @@ int build(const std::vector<std::string>& args) {
 
             cmake << "\n";
 
-            const YAML::Node deps = config["Dependencies"];
-
             std::vector<std::string> mustLink;
 
             const std::regex pattern("^(.+?)==(.+?)$");
-            for (const YAML::Node dep : deps) {
+            for (int i = 0; i < config["Dependencies"].size(); i++) {
+                YAML::Node dep = config["Dependencies"][i];
                 std::smatch matches;
                 std::string target = dep.as<std::string>();
                 std::string depName = target;
@@ -65,24 +92,30 @@ int build(const std::vector<std::string>& args) {
                     targetVer = matches[2];
                 }
 
-                const std::regex namePattern(R"~(^.+\/(.+?).git$)~");
-                std::smatch nameMatches;
-                if (std::regex_match(target, nameMatches, namePattern)) {
-                    depName = nameMatches[1];
-                    mustLink.push_back(depName);
+                if (!validateRepo(target, targetVer)) {
+                    logger.error(std::format("Removing invalid dependency {}", dep.as<std::string>()));
+                    config["dependencies"].remove(i);
+                    i--;
                 } else {
-                    cmake.clear();
-                    cmake.close();
-                    logger.fatal(std::format("Invalid dependency {}", target));
-                }
+                    const std::regex namePattern(R"~(^.+\/(.+?).git$)~");
+                    std::smatch nameMatches;
+                    if (std::regex_match(target, nameMatches, namePattern)) {
+                        depName = nameMatches[1];
+                        mustLink.push_back(depName);
+                    } else {
+                        cmake.clear();
+                        cmake.close();
+                        logger.fatal(std::format("Invalid dependency {}", target));
+                    }
 
-                cmake << std::format("FetchContent_Declare({}\n", depName);
-                cmake << std::format("\tGIT_REPOSITORY {}\n", target);
-                if (targetVer != "latest") {
-                    cmake << std::format("\tGIT_TAG {}\n", targetVer);
+                    cmake << std::format("FetchContent_Declare({}\n", depName);
+                    cmake << std::format("\tGIT_REPOSITORY {}\n", target);
+                    if (targetVer != "latest") {
+                        cmake << std::format("\tGIT_TAG {}\n", targetVer);
+                    }
+                    cmake << ")\n";
+                    cmake << std::format("FetchContent_MakeAvailable({})\n", depName);
                 }
-                cmake << ")\n";
-                cmake << std::format("FetchContent_MakeAvailable({})\n", depName);
             }
 
             cmake << "\n";
@@ -137,8 +170,6 @@ int init(const std::vector<std::string>& args) {
 
 int install(const std::vector<std::string>& args) {
     if (initCheck()) {
-        YAML::Node config = YAML::LoadFile("cradle.yaml");
-
         const std::regex pattern("^(.+?)==(.+?)$");
         std::smatch matches;
 
@@ -149,8 +180,14 @@ int install(const std::vector<std::string>& args) {
             targetVer = matches[2];
         }
 
+        if (!validateRepo(target, targetVer)) {
+            return false;
+        }
+
         bool duplicate = false;
         bool otherVersions = false;
+
+        YAML::Node config = YAML::LoadFile("cradle.yaml");
 
         for (int i = 0; i < config["Dependencies"].size(); i++) {
             YAML::Node node = config["Dependencies"][i];
