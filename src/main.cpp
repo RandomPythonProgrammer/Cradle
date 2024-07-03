@@ -3,6 +3,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <cmath>
+#include <cstring>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -54,11 +55,13 @@ int build(const std::vector<std::string>& args) {
 
             const YAML::Node deps = config["Dependencies"];
 
+            std::vector<std::string> mustLink;
+
             const std::regex pattern("(.+?)==(.+?)");
-            int numDeps = deps.size();
-            for (int i = 0; i < numDeps; i++) {
+            for (const YAML::Node dep : deps) {
                 std::smatch matches;
-                std::string target = deps[i].as<std::string>();
+                std::string target = dep.as<std::string>();
+                std::string depName = target;
                 std::string targetVer = "latest";
 
                 if (std::regex_match(target, matches, pattern)) {
@@ -66,13 +69,24 @@ int build(const std::vector<std::string>& args) {
                     targetVer = matches[2];
                 }
 
-                cmake << std::format("FetchContent_Declare(Lib{}\n", i);
+                const std::regex namePattern(R"~(^.+\/(.+?).git$)~");
+                std::smatch nameMatches;
+                if (std::regex_match(target, nameMatches, namePattern)) {
+                    depName = nameMatches[1];
+                    mustLink.push_back(depName);
+                } else {
+                    cmake.clear();
+                    cmake.close();
+                    logger.fatal(std::format("Invalid dependency {}", target));
+                }
+
+                cmake << std::format("FetchContent_Declare({}\n", depName);
                 cmake << std::format("\tGIT_REPOSITORY {}\n", target);
                 if (targetVer != "latest") {
                     cmake << std::format("\tGIT_TAG {}\n", targetVer);
                 }
                 cmake << ")\n";
-                cmake << std::format("FetchContent_MakeAvailable(Lib{})\n", i);
+                cmake << std::format("FetchContent_MakeAvailable({})\n", depName);
             }
 
             cmake << "\n";
@@ -83,8 +97,9 @@ int build(const std::vector<std::string>& args) {
 
             cmake << "\n";
 
-            for (int i = 0; i < numDeps; i++) {
-                cmake << std::format("target_link_libraries({} PRIVATE Lib{})\n", config["Project Name"].as<std::string>(), i);
+            for (std::string& link: mustLink) {
+                cmake << std::format("target_link_libraries({} PRIVATE ${{{}_LIBRARIES}})\n", config["Executable Name"].as<std::string>(), link);
+                cmake << std::format("target_include_directories(myExecutable PRIVATE \"${{{}_SOURCE_DIR}}/include\")\n", link);
             }
 
             cmake << "\n";
