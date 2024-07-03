@@ -202,10 +202,8 @@ int uninstall(const std::vector<std::string>& args) {
         std::smatch matches;
 
         std::string target = args[2];
-        std::string targetVer = "latest";
         if (std::regex_match(target, matches, pattern)) {
             target = matches[1];
-            targetVer = matches[2];
         }
 
         bool exists = false;
@@ -216,10 +214,10 @@ int uninstall(const std::vector<std::string>& args) {
             YAML::Node node = deps[i];
             std::string lib = node.as<std::string>();
             if (std::regex_match(lib, matches, pattern)) {
-                if (matches[1] != target || matches[2] != targetVer) {
+                if (matches[1] != target) {
                     const std::regex namePattern(R"~(^.+\/(.+?).git==(.+)$)~");
                     std::smatch nameMatches;
-                    if (!(std::regex_match(lib, nameMatches, namePattern) && nameMatches[1] == target && nameMatches[2] == targetVer)) {
+                    if (!(std::regex_match(lib, nameMatches, namePattern) && nameMatches[1] == target)) {
                         continue;
                     }
                 }

@@ -20,9 +20,9 @@ This generates the `CMakeLists.txt` file based on the settings in the `cradle.ya
 ```
 cradle install <repo>
 ```
-This installs a library given the `repo` (`.git` repository link). To specify the version `==<git tag>` should be added after the repository link, the default is the latest version. This will also run the `build` command to generate the `CMakeLists.txt` file.
+This installs a library given the `repo` (`.git` repository link). To specify the version `==<git tag>` should be added after the repository link, the default is the latest version. This command will also try to remove other versions/duplicates. This will also run the `build` command to generate the `CMakeLists.txt` file.
 
 ```
 cradle uninstall <repo|name>
 ```
-This uninstalls a library given the `repo` (`.git` repository link) **or** the `name` of the library. This will also run the `build` command to generate the `CMakeLists.txt` file.
+This uninstalls a library given the `repo` (`.git` repository link) **or** the `name` of the library. This will remove all versions. This will also run the `build` command to generate the `CMakeLists.txt` file.
