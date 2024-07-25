@@ -8,7 +8,7 @@
 
 bool GitValidator::validate(const IDependency* dependency) const {
     if (const GitDependency* gitDependency = dynamic_cast<const GitDependency*>(dependency)) {
-        cpr::Response cmakeResponse = cpr::Get(cpr::Url(std::format("https://api.github.com/repos/{}/{}/contents/CMakeLists.txt", gitDependency->owner, gitDependency->name)));
+        cpr::Response cmakeResponse = cpr::Get(cpr::Url(std::format("https://github.com/{}/{}", gitDependency->owner, gitDependency->name)));
         return cmakeResponse.status_code == 200;
     }
     throw std::runtime_error("Not a GitDependency");
