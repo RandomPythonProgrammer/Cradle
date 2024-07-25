@@ -6,9 +6,9 @@ ModuleManager::ModuleManager(const IModuleFactory* moduleFactory) {
     this->moduleFactory = std::unique_ptr<const IModuleFactory>(moduleFactory);
 }
 
-ModuleManager& ModuleManager::createModule(const std::string& name) {
+Module& ModuleManager::createModule(const std::string& name) {
     modules.emplace(name, moduleFactory->createModule(name));
-    return *this;
+    return getModule(name);
 }
 
 Module& ModuleManager::getModule(const std::string& name) {

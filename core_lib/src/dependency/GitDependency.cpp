@@ -6,7 +6,7 @@
 
 GitDependency::GitDependency(const std::string& data) {
     // get the git path and tag
-    std::regex regex1(R"~(^(.+?\.git)==(.+?)$)~");
+    std::regex regex1(R"~(^(.+?\.git)(?:==(.+?))?$)~");
     // get the name
     std::regex regex2(R"~(.+\/(.+?)\/(.+?).git$)~");
 
@@ -14,7 +14,10 @@ GitDependency::GitDependency(const std::string& data) {
 
     if (std::regex_match(data, match1, regex1)) {
         git = match1[1];
-        tag = match1[2];
+        tag = "";
+        if (match1.size() > 2) {
+            tag = match1[2];
+        }
         if (std::regex_match(git, match2, regex2)) {
             owner = match2[1];
             name = match2[2];

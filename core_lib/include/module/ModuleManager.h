@@ -11,7 +11,7 @@ struct ModuleManager {
         std::unique_ptr<const IModuleFactory> moduleFactory;
     public:
         ModuleManager(const IModuleFactory* moduleFactory);
-        ModuleManager& createModule(const std::string& name);
+        Module& createModule(const std::string& name);
         Module& getModule(const std::string& name);
         ModuleManager& removeModule(const std::string& name);
         bool hasModule(const std::string& name) const;

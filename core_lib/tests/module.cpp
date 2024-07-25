@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 #include <memory>
+
 #include "catch2/catch_test_macros.hpp"
 #include "module/ModuleManager.h"
 #include "module/ModuleManagerFactory.h"
