@@ -8,7 +8,6 @@
 
 bool GitValidator::validate(const IDependency* dependency) const {
     if (const GitDependency* gitDependency = dynamic_cast<const GitDependency*>(dependency)) {
-        //TODO: CPR is giving segmentation fault for some reason
         cpr::Response cmakeResponse = cpr::Get(cpr::Url(std::format("https://api.github.com/repos/{}/{}/contents/CMakeLists.txt", gitDependency->owner, gitDependency->name)));
         return cmakeResponse.status_code == 200;
     }
