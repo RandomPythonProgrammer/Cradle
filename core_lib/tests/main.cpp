@@ -5,7 +5,7 @@
 
 int main(int argc, char* argv[]) {
     //This does some sort of internal init and fixes cpr for testing
-    cpr::Get(cpr::Url("https://www.example.com"));
-    
+    cpr::Get(cpr::Url("127.0.0.1"));
+
     return Catch::Session().run(argc, argv);
 }
