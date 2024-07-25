@@ -11,12 +11,13 @@ DependencyManager::DependencyManager(const IValidatorFactory* validatorFactory) 
     this->validatorFactory = validatorFactory;
 }
 
-DependencyManager& DependencyManager::addDependency(const IDependency* dependency) {
+bool DependencyManager::addDependency(const IDependency* dependency) {
     std::unique_ptr<const IValidator> validator = std::unique_ptr<const IValidator>(validatorFactory->createValidator(dependency));
     if (validator->validate(dependency)) {
         dependencies.push_back(std::unique_ptr<const IDependency>(dependency));
+        return true;
     }
-    return *this;
+    return false;
 }
 
 DependencyManager& DependencyManager::removeDependency(const IDependency* dependency) {

@@ -13,7 +13,7 @@ class DependencyManager {
 
     public:
         DependencyManager(const IValidatorFactory* validatorFactory);
-        DependencyManager& addDependency(const IDependency* dependency);
+        bool addDependency(const IDependency* dependency);
         const std::vector<std::unique_ptr<const  IDependency>>& getDependencies() const;
         DependencyManager& removeDependency(const IDependency* dependency);
         const IDependency* getSimilar(const IDependency* dependency) const;
