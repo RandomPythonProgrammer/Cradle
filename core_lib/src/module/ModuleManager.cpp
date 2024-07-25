@@ -7,12 +7,12 @@ ModuleManager::ModuleManager(const IModuleFactory* moduleFactory) {
 }
 
 ModuleManager& ModuleManager::createModule(const std::string& name) {
-    modules[name] = moduleFactory->createModule(name);
+    modules.emplace(name, moduleFactory->createModule(name));
     return *this;
 }
 
 Module& ModuleManager::getModule(const std::string& name) {
-    return modules[name];
+    return modules.at(name);
 }
 
 ModuleManager& ModuleManager::removeModule(const std::string& name) {

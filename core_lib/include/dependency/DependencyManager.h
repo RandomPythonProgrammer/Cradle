@@ -9,7 +9,7 @@
 class DependencyManager {
    private:
     std::vector<std::unique_ptr<const IDependency>> dependencies;
-    std::unique_ptr<const IValidatorFactory> validatorFactory;
+    const IValidatorFactory* validatorFactory;
 
     public:
         DependencyManager(const IValidatorFactory* validatorFactory);

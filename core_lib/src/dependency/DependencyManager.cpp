@@ -8,7 +8,7 @@
 #include "validator/IValidatorFactory.h"
 
 DependencyManager::DependencyManager(const IValidatorFactory* validatorFactory) {
-    this->validatorFactory = std::unique_ptr<const IValidatorFactory>(validatorFactory);
+    this->validatorFactory = validatorFactory;
 }
 
 DependencyManager& DependencyManager::addDependency(const IDependency* dependency) {
