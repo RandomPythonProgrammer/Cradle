@@ -21,7 +21,8 @@ bool FileValidator::validate(const IDependency* dependency) const {
         if (stream.good()) {
             stream << std::format("find_package({})\nif(NOT {}_FOUND)\n\tmessage(FATAL_ERROR \"NOT FOUND\")\nendif()", fileDependency->name, fileDependency->name) << std::endl;
             stream.close();
-            int status = system(std::format("cmake -S {} -B {} > output.txt 2>&1", dir.string(), build.string()).c_str());
+            std::filesystem::path tempOutput = dir / "output.txt";
+            int status = system(std::format("cmake -S {} -B {} > {} 2>&1", dir.string(), build.string(), tempOutput.string()).c_str());
             std::filesystem::remove_all(".temp");
             return status == 0;
         }
