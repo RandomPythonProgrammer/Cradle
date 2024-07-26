@@ -1,5 +1,6 @@
 #include "dependency/FileDependency.h"
 
+#include <format>
 #include <regex>
 
 #include "dependency/MalformedDependencyException.h"
@@ -22,4 +23,8 @@ bool FileDependency::isSimilar(const IDependency* other) const {
         return fileOther->name == name;
     }
     return false;
+}
+
+std::string FileDependency::toString() const {
+    return std::format("file://{}", name);
 }

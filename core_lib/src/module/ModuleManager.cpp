@@ -1,5 +1,6 @@
 #include "module/ModuleManager.h"
 #include <pstl/glue_algorithm_defs.h>
+#include <unordered_map>
 #include "module/IModuleFactory.h"
 
 ModuleManager::ModuleManager(const IModuleFactory* moduleFactory) {
@@ -22,4 +23,12 @@ ModuleManager& ModuleManager::removeModule(const std::string& name) {
 
 bool ModuleManager::hasModule(const std::string& name) const {
     return modules.contains(name);
+}
+
+std::vector<std::string> ModuleManager::getModules() const {
+    std::vector<std::string> vec;
+    for (const std::pair<const std::string, Module>& pair: modules) {
+        vec.push_back(pair.first);
+    }
+    return vec;
 }

@@ -1,5 +1,6 @@
 #include "dependency/GitDependency.h"
 
+#include <format>
 #include <regex>
 
 #include "dependency/MalformedDependencyException.h"
@@ -34,3 +35,12 @@ bool GitDependency::isSimilar(const IDependency* other) const {
     }
     return false;
 };
+
+std::string GitDependency::toString() const {
+    std::string output = git;
+    if (!tag.empty()) {
+        output += std::format("=={}", tag);
+    }
+    return output;
+}
+

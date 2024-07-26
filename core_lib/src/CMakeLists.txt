@@ -4,3 +4,6 @@ add_library(cradle_lib "${SOURCES}")
 
 target_link_libraries(cradle PRIVATE yaml-cpp)
 target_link_libraries(cradle PRIVATE cpr)
+
+target_link_libraries(cradle_lib PRIVATE yaml-cpp)
+target_link_libraries(cradle_lib PRIVATE cpr)

@@ -13,6 +13,7 @@ struct ModuleManager {
         ModuleManager(const IModuleFactory* moduleFactory);
         Module& createModule(const std::string& name);
         Module& getModule(const std::string& name);
+        std::vector<std::string> getModules() const;
         ModuleManager& removeModule(const std::string& name);
         bool hasModule(const std::string& name) const;
 };

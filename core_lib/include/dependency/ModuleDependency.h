@@ -9,4 +9,5 @@ class ModuleDependency : public IDependency {
     std::string name;
     ModuleDependency(const std::string& data);
     bool isSimilar(const IDependency* other) const override;
+    std::string toString() const override;
 };

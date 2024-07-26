@@ -1,5 +1,6 @@
 #include "dependency/ModuleDependency.h"
 
+#include <format>
 #include <regex>
 
 #include "dependency/MalformedDependencyException.h"
@@ -22,4 +23,8 @@ bool ModuleDependency::isSimilar(const IDependency* other) const {
         return moduleOther->name == name;
     }
     return false;
+}
+
+std::string ModuleDependency::toString() const {
+    return std::format("module://{}", name);
 }

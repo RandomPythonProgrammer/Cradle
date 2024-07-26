@@ -8,4 +8,5 @@ class GitDependency : public IDependency {
     std::string git, tag, name, owner;
     GitDependency(const std::string& data);
     bool isSimilar(const IDependency* other) const override;
+    std::string toString() const override;
 };
